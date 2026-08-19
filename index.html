@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RenCupDev</title>
+
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        // Dark mode toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // Load theme on startup
+        document.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'light') document.documentElement.classList.remove('dark');
+        });
+    </script>
+
+</head>
+<body class="bg-gray-900 text-white dark:bg-gray-900 dark:text-white transition-all">
+
+<!-- HEADER -->
+<header class="text-center py-16">
+    <img src="https://avatars.githubusercontent.com/u/318725747?v=4"
+         class="w-32 h-32 rounded-full mx-auto shadow-lg transition-all hover:scale-105">
+
+    <h1 class="text-5xl font-bold mt-6">RenCupDev</h1>
+    <p class="text-gray-300 mt-4 text-lg">
+        Hi, I'm RenCup. I'm a developer from Italy. <br>
+        I am also an Android and iOS modder and i use Arch btw.
+    </p>
+</header>
+
+<!-- LANGUAGES -->
+<section class="max-w-4xl mx-auto px-6 py-10">
+    <h2 class="text-3xl font-bold mb-6">Languages I Use</h2>
+
+    <div class="flex flex-wrap gap-4">
+        <img src="https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white">
+        <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+        <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white">
+        <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white">
+    </div>
+</section>
+
+<!-- REPOSITORIES -->
+<section class="max-w-4xl mx-auto px-6 py-10">
+    <h2 class="text-3xl font-bold mb-6">My Repositories</h2>
+
+    <div id="repo-container" class="space-y-4">
+        <!-- JS will insert repo cards here -->
+    </div>
+</section>
+
+<script>
+    // Fetch GitHub repos automatically
+    fetch("https://api.github.com/users/RenCupDev/repos")
+        .then(res => res.json())
+        .then(repos => {
+            const container = document.getElementById("repo-container");
+
+            repos.forEach(repo => {
+                const card = document.createElement("div");
+                card.className =
+                    "bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all";
+
+                card.innerHTML = `
+                    <h3 class="text-xl font-semibold">${repo.name}</h3>
+                    <p class="text-gray-400 mt-2">${repo.description || "No description"}</p>
+                    <a href="${repo.html_url}" target="_blank"
+                       class="text-indigo-400 hover:text-indigo-300 mt-3 inline-block">
+                       View on GitHub →
+                    </a>
+                `;
+
+                container.appendChild(card);
+            });
+        });
+</script>
+
+<!-- OTHER PROJECTS -->
+<section class="max-w-4xl mx-auto px-6 py-10">
+    <h2 class="text-3xl font-bold mb-6">Other Projects</h2>
+
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
+        <img src="https://avatars.githubusercontent.com/u/318728657?s=200&v=4"
+             class="w-20 mb-4 rounded-lg">
+
+        <h3 class="text-2xl font-semibold">Amethyst</h3>
+        <p class="text-gray-400 mt-2">Android modding platform.</p>
+
+        <a href="https://github.com/TheAmethystProject" target="_blank"
+           class="text-indigo-400 hover:text-indigo-300 mt-3 inline-block">
+           View Organization →
+        </a>
+    </div>
+</section>
+
+<footer class="text-center py-10 text-gray-500">
+    © 2026 RenCupDev — I ❤️ OSS
+</footer>
+
+</body>
+</html>
