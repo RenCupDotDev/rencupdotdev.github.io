@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeoNano: if nano and NeoVim had a baby</title>
+  <meta name="description" content="NeoNano is a terminal text editor written in Python with ncurses. Write like nano, command like vi, extend with plugins.">
+  <link rel="icon" href="logo.png">
+  <style>
+    /* palette: #2a2e45 navy, #9ba2ff lavender, #00c49a teal, #ed6a5a coral, #938274 taupe */
+    :root {
+      --navy: #2a2e45;
+      --lavender: #9ba2ff;
+      --teal: #00c49a;
+      --coral: #ed6a5a;
+      --taupe: #938274;
+      --border: rgba(147, 130, 116, 0.35);
+      --panel: rgba(0, 0, 0, 0.16);
+      --panel-deep: rgba(0, 0, 0, 0.28);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--navy);
+      color: var(--lavender);
+      font-family: var(--sans);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, kbd, pre { font-family: var(--mono); }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+    /* top bar */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--navy);
+      border-bottom: 1px solid var(--border);
+    }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--lavender); font-weight: 700; font-size: 18px; }
+    .brand:hover { text-decoration: none; }
+    .brand img { width: 26px; height: 26px; }
+    nav { display: flex; gap: 22px; }
+    nav a { color: var(--taupe); font-size: 15px; }
+    nav a:hover { color: var(--lavender); text-decoration: none; }
+
+    /* hero */
+    .hero { text-align: center; padding: 80px 0 56px; }
+    .headline { display: flex; align-items: center; justify-content: center; gap: 28px; margin-bottom: 26px; }
+    .headline .logo { display: block; width: 112px; height: 112px; flex-shrink: 0; }
+    .headline h1 { text-align: left; margin: 0; }
+    h1 {
+      font-size: clamp(38px, 6.5vw, 64px);
+      line-height: 1.08; margin: 0 0 22px; letter-spacing: -0.02em; font-weight: 750;
+      color: var(--lavender);
+    }
+    .lead { color: var(--lavender); opacity: 0.85; font-size: 19px; margin: 0 auto 36px; max-width: 580px; }
+    .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;
+      border: 1px solid var(--border); color: var(--lavender); background: transparent;
+    }
+    .btn:hover { text-decoration: none; border-color: var(--lavender); color: var(--lavender); }
+    .btn.primary { background: var(--teal); border-color: var(--teal); color: var(--navy); }
+    .btn.primary:hover { color: var(--navy); filter: brightness(1.06); }
+
+    /* editor mock */
+    .editor-wrap { padding: 0 0 24px; }
+    .editor {
+      background: var(--panel-deep); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    .editor-top { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+    .editor-top i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+    .editor-top i:nth-child(1) { background: var(--coral); }
+    .editor-top i:nth-child(2) { background: var(--taupe); }
+    .editor-top i:nth-child(3) { background: var(--teal); }
+    .editor-top span { margin-left: 12px; color: var(--taupe); font-family: var(--mono); font-size: 13px; }
+    .header-bar {
+      background: var(--taupe); color: var(--navy); font-family: var(--mono); font-size: 13px; font-weight: 700;
+      padding: 5px 16px; display: flex; justify-content: space-between;
+    }
+    .editor pre { margin: 0; padding: 12px 0; font-size: 14px; line-height: 1.6; overflow-x: auto; color: var(--lavender); }
+    .editor .row { display: flex; padding: 0 16px; min-width: max-content; }
+    .editor .row.cur { background: rgba(155, 162, 255, 0.12); }
+    .editor .ln { width: 34px; color: var(--taupe); text-align: right; padding-right: 14px; user-select: none; }
+    .editor .row.cur .ln { color: var(--teal); }
+    .c-warn { color: var(--coral); }
+    .c-dim { color: var(--taupe); }
+    .sel { background: var(--lavender); color: var(--navy); }
+
+    /* sections */
+    section { padding: 72px 0; border-top: 1px solid var(--border); }
+    .eyebrow { display: block; font-family: var(--mono); font-size: 13px; color: var(--teal); margin-bottom: 10px; }
+    h2 { font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.02em; margin: 0 0 14px; line-height: 1.1; color: var(--lavender); }
+    .sub { color: var(--lavender); opacity: 0.8; font-size: 18px; max-width: 640px; margin: 0 0 40px; }
+
+    /* features */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .feature .mark {
+      width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+      font-family: var(--mono); font-weight: 700; color: var(--navy); margin-bottom: 14px;
+    }
+    .feature h3 { margin: 0 0 8px; font-size: 18px; color: var(--lavender); }
+    .feature p { margin: 0; color: var(--lavender); opacity: 0.8; font-size: 15px; }
+
+    /* install */
+    .install { max-width: 760px; }
+    .cmd {
+      position: relative; background: var(--panel-deep); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 84px 14px 16px; margin-bottom: 14px;
+    }
+    .cmd code { display: block; font-size: 14px; color: var(--lavender); white-space: pre-wrap; word-break: break-all; }
+    .cmd .label { display: block; font-family: var(--sans); font-size: 13px; color: var(--taupe); margin-bottom: 6px; }
+    .copy {
+      position: absolute; right: 10px; top: 10px; font: inherit; font-size: 13px;
+      background: transparent; color: var(--taupe); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px; cursor: pointer;
+    }
+    .copy:hover { color: var(--lavender); border-color: var(--lavender); }
+    .note { color: var(--taupe); font-size: 15px; margin: 8px 0 0; }
+    .note code { color: var(--lavender); }
+
+    /* keys */
+    .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 22px; }
+    .panel h3 { font-size: 13px; color: var(--taupe); margin: 16px 0 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    td { padding: 10px 0; border-top: 1px solid var(--border); vertical-align: top; }
+    tr:first-child td { border-top: none; }
+    td:first-child { width: 44%; padding-right: 12px; }
+    td:last-child { color: var(--lavender); opacity: 0.85; }
+    kbd {
+      display: inline-block; background: var(--panel-deep); border: 1px solid var(--border);
+      border-radius: 5px; padding: 1px 7px; font-size: 13px; color: var(--teal); margin: 1px 0;
+    }
+
+    /* config and plugins */
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .code-block {
+      margin: 0; background: var(--panel-deep); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 22px; font-size: 14px; line-height: 1.65; overflow-x: auto; color: var(--lavender);
+    }
+    .code-block .c { color: var(--taupe); }
+    .code-block .s { color: var(--teal); }
+    .code-block .k { color: var(--coral); }
+    .block-gap { margin-top: 20px; }
+
+    /* faq */
+    .faq { max-width: 760px; }
+    details { border-top: 1px solid var(--border); padding: 16px 0; }
+    details:last-of-type { border-bottom: 1px solid var(--border); }
+    summary { cursor: pointer; font-weight: 600; font-size: 17px; list-style: none; color: var(--lavender); }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: " +"; color: var(--taupe); }
+    details[open] summary::after { content: " –"; }
+    details p { margin: 12px 0 0; color: var(--lavender); opacity: 0.85; }
+    .yes { color: var(--coral); font-weight: 700; border-bottom: 2px solid var(--coral); }
+    .yes:hover { text-decoration: none; opacity: 0.8; }
+
+    /* footer */
+    footer { border-top: 1px solid var(--border); padding: 32px 0 40px; color: var(--taupe); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; align-items: center; }
+    footer .links { display: flex; gap: 20px; }
+    footer a { color: var(--taupe); }
+    footer a:hover { color: var(--lavender); text-decoration: none; }
+
+    @media (max-width: 860px) {
+      .features { grid-template-columns: 1fr 1fr; }
+      .keys, .two { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .features { grid-template-columns: 1fr; }
+      nav a:not(.gh):not(.inst) { display: none; }
+      .hero { padding: 56px 0 44px; }
+      .headline { flex-direction: column; gap: 18px; }
+      .headline h1 { text-align: center; }
+      .headline .logo { width: 92px; height: 92px; }
+      section { padding: 56px 0; }
+      .editor pre { font-size: 12px; }
+      .cmd { padding-right: 16px; padding-bottom: 50px; }
+      .copy { top: auto; bottom: 10px; }
+      td:first-child { width: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" id="top"><img src="logo.png" alt="">NeoNano</a>
+    <nav>
+      <a class="inst" href="#install">Install</a>
+      <a href="#keys">Keys</a>
+      <a href="#config">Config</a>
+      <a href="#plugins">Plugins</a>
+      <a href="#faq">FAQ</a>
+      <a class="gh" href="https://github.com/RenCupDotDev/NeoNano">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <div class="headline">
+        <img class="logo" src="logo.png" alt="NeoNano logo">
+        <h1>If nano and NeoVim had a baby.</h1>
+      </div>
+      <p class="lead">
+        A terminal editor that writes like nano and commands like vi.
+        Type, save with Ctrl+S, and press F1 for the <code>:</code> palette.
+        Every color and keybind lives in one TOML file.
+      </p>
+      <div class="buttons">
+        <a class="btn primary" href="#install">Install NeoNano</a>
+        <a class="btn" href="https://github.com/RenCupDotDev/NeoNano">View on GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-wrap">
+    <div class="wrap">
+      <div class="editor" role="img" aria-label="NeoNano editing a file">
+        <div class="editor-top"><i></i><i></i><i></i><span>notes.md</span></div>
+        <div class="header-bar"><span> NeoNano  notes.md *</span><span>5:12  6 lines </span></div>
+        <pre><div class="row"><span class="ln">1</span><span>  <span style="color:var(--lavender);font-weight:700"># Ideas for the weekend</span></span></div><div class="row"><span class="ln">2</span></div><div class="row"><span class="ln">3</span><span>- <span class="c-warn">TODO:</span> ship the palette</span></div><div class="row cur"><span class="ln">4</span><span>- plugins are <span class="sel">just folders</span></span></div><div class="row"><span class="ln">5</span><span class="c-dim">  def setup(api):</span></div><div class="row"><span class="ln">6</span></div></pre>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <span class="eyebrow">// why NeoNano</span>
+      <h2>Familiar on day one.</h2>
+      <p class="sub">No modes to learn before you can type. The power is there when you reach for it.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="mark" style="background: var(--teal);">Aa</div>
+          <h3>nano-style writing</h3>
+          <p>Type straight away. Undo, redo, mark and select, cut, copy, paste, find, and go to line, all on Ctrl and Alt keys.</p>
+        </div>
+        <div class="feature">
+          <div class="mark" style="background: var(--lavender);">:</div>
+          <h3>vi-style palette</h3>
+          <p>F1 opens a <code>:</code> prompt. Save, open, find, run shell commands, or change any setting live with <code>:set</code>.</p>
+        </div>
+        <div class="feature">
+          <div class="mark" style="background: var(--coral);">{ }</div>
+          <h3>configure everything</h3>
+          <p>Line numbers on the left, right, or off. Themes, per-color overrides, every keybind, autosave, and the header format.</p>
+        </div>
+        <div class="feature">
+          <div class="mark" style="background: var(--lavender);">py</div>
+          <h3>plugins are folders</h3>
+          <p>A folder with an <code>app.py</code> and a <code>setup(api)</code> function. Turn it on by name in your config.</p>
+        </div>
+        <div class="feature">
+          <div class="mark" style="background: var(--teal);">$</div>
+          <h3>one-line install</h3>
+          <p>A Linux installer with update and uninstall, plus a Windows path with <code>pip install windows-curses</code>.</p>
+        </div>
+        <div class="feature">
+          <div class="mark" style="background: var(--taupe);">0</div>
+          <h3>no dependencies</h3>
+          <p>Only the Python standard library and curses. Python 3.11 or newer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <span class="eyebrow">// install</span>
+      <h2>Install in one line.</h2>
+      <p class="sub">The installer checks Python first and prints the right package command if something is missing.</p>
+      <div class="install">
+        <div class="cmd">
+          <span class="label">Linux, system-wide (uses sudo when needed)</span>
+          <code id="cmd-system">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash</code>
+          <button class="copy" data-target="cmd-system">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Linux, without root</span>
+          <code id="cmd-user">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --user</code>
+          <button class="copy" data-target="cmd-user">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Start it</span>
+          <code id="cmd-run">nnano notes.md</code>
+          <button class="copy" data-target="cmd-run">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Windows, Python 3.11+</span>
+          <code id="cmd-win">pip install windows-curses</code>
+          <button class="copy" data-target="cmd-win">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Uninstall (keeps your config)</span>
+          <code id="cmd-uninstall">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --uninstall</code>
+          <button class="copy" data-target="cmd-uninstall">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Uninstall and delete your config</span>
+          <code id="cmd-purge">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --purge</code>
+          <button class="copy" data-target="cmd-purge">Copy</button>
+        </div>
+        <p class="note">Run the install command again to update. Your config is kept.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="keys">
+    <div class="wrap">
+      <span class="eyebrow">// keybinds</span>
+      <h2>The defaults.</h2>
+      <p class="sub">Everything here can be remapped in the <code>[keys]</code> table of your config.</p>
+      <div class="keys">
+        <div class="panel">
+          <h3>Writing</h3>
+          <table>
+            <tr><td><kbd>Ctrl+S</kbd></td><td>Save</td></tr>
+            <tr><td><kbd>Ctrl+X</kbd></td><td>Quit (twice if unsaved)</td></tr>
+            <tr><td><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></td><td>Undo, redo</td></tr>
+            <tr><td><kbd>Ctrl+D</kbd></td><td>Delete line</td></tr>
+            <tr><td><kbd>Alt+D</kbd></td><td>Duplicate line</td></tr>
+            <tr><td><kbd>Tab</kbd> <kbd>Shift+Tab</kbd></td><td>Indent, unindent</td></tr>
+            <tr><td><kbd>Alt+B</kbd> <kbd>Alt+F</kbd></td><td>Word left, word right</td></tr>
+            <tr><td><kbd>Alt+&lt;</kbd> <kbd>Alt+&gt;</kbd></td><td>Start, end of file</td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Selection and search</h3>
+          <table>
+            <tr><td><kbd>Ctrl+T</kbd></td><td>Set or clear the mark</td></tr>
+            <tr><td><kbd>Alt+A</kbd></td><td>Select all</td></tr>
+            <tr><td><kbd>Ctrl+K</kbd> <kbd>Alt+C</kbd> <kbd>Ctrl+U</kbd></td><td>Cut, copy, paste</td></tr>
+            <tr><td><kbd>Ctrl+F</kbd> <kbd>F3</kbd></td><td>Find, find next</td></tr>
+            <tr><td><kbd>Ctrl+G</kbd></td><td>Go to line</td></tr>
+          </table>
+          <h3>View</h3>
+          <table>
+            <tr><td><kbd>Alt+N</kbd> <kbd>Alt+L</kbd></td><td>Line numbers, relative numbers</td></tr>
+            <tr><td><kbd>Alt+T</kbd></td><td>Cycle themes</td></tr>
+            <tr><td><kbd>F1</kbd></td><td>Open the <code>:</code> palette</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="wrap">
+      <span class="eyebrow">// config</span>
+      <h2>One TOML file for everything.</h2>
+      <p class="sub">Created on first run. Open it with <kbd>Alt+I</kbd> or <code>:config</code>, then apply with <kbd>Alt+K</kbd> or <code>:reload</code>.</p>
+      <div class="two">
+        <pre class="code-block"><span class="c"># config.toml</span>
+<span class="k">theme</span> = <span class="s">"neonano"</span>
+
+<span class="k">[editor]</span>
+<span class="k">tab_width</span> = <span class="s">4</span>
+<span class="k">autosave_seconds</span> = <span class="s">30</span>
+
+<span class="k">[view]</span>
+<span class="k">line_numbers</span> = <span class="s">"right"</span>
+<span class="k">relative_numbers</span> = <span class="s">true</span>
+
+<span class="k">[colors]</span>
+<span class="k">text</span> = <span class="s">"#ffffff"</span>
+
+<span class="k">[keys]</span>
+<span class="k">save</span> = [<span class="s">"ctrl+s"</span>, <span class="s">"f2"</span>]</pre>
+        <pre class="code-block"><span class="c"># from the : palette, live</span>
+:set view.line_numbers <span class="s">none</span>
+:set editor.tab_width <span class="s">2</span>
+:theme <span class="s">mono</span>
+:execute <span class="s">git status</span>
+
+<span class="c"># themes/mytheme.toml</span>
+<span class="k">name</span> = <span class="s">"mytheme"</span>
+<span class="k">[colors]</span>
+<span class="k">background</span> = <span class="s">"#1e1e2e"</span>
+<span class="k">text</span> = <span class="s">"#cdd6f4"</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="plugins">
+    <div class="wrap">
+      <span class="eyebrow">// plugins</span>
+      <h2>A plugin is a folder.</h2>
+      <p class="sub">Put an <code>app.py</code> in <code>plugins/your-name/</code>, add the name to <code>[plugins] enabled</code>, and restart.</p>
+      <pre class="code-block"><span class="k">def</span> setup(api):
+    <span class="c"># a palette command:  :hello world</span>
+    <span class="k">@api.command</span>(<span class="s">"hello"</span>)
+    <span class="k">def</span> cmd_hello(ed, arg):
+        ed.message(<span class="s">f"hello {arg or 'world'}"</span>)
+
+    <span class="c"># an action a keybind can call:  [keys] say_hello = "alt+g"</span>
+    <span class="k">@api.action</span>(<span class="s">"say_hello"</span>)
+    <span class="k">def</span> act_hello(ed):
+        ed.message(<span class="s">"hello from a keybind"</span>)
+
+    <span class="c"># an event hook</span>
+    api.on(<span class="s">"save"</span>, <span class="k">lambda</span> ed, path: ed.message(<span class="s">f"saved {path}"</span>))</pre>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <span class="eyebrow">// faq</span>
+      <h2>Questions.</h2>
+      <div class="faq">
+        <details>
+          <summary>Is it bad?</summary>
+          <p><a class="yes" href="https://rickroll.it" target="_blank" rel="noopener">Yes.</a></p>
+        </details>
+        <details>
+          <summary>Does it work on Windows?</summary>
+          <p>Yes, with Python 3.11+ and <code>pip install windows-curses</code>.</p>
+        </details>
+        <details>
+          <summary>What license is it under?</summary>
+          <p>GPL-3.0.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>NeoNano · GPL-3.0</div>
+    <div class="links">
+      <a href="https://github.com/RenCupDotDev/NeoNano">GitHub</a>
+      <a href="https://github.com/RenCupDotDev/NeoNano#readme">Docs</a>
+      <a href="https://github.com/RenCupDotDev/NeoNano/issues">Issues</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = document.getElementById(btn.dataset.target).textContent;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
