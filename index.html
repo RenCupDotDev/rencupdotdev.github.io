@@ -50,44 +50,10 @@
     </div>
 </section>
 
-<!-- REPOSITORIES -->
+<!-- Projects -->
+
 <section class="max-w-4xl mx-auto px-6 py-10">
-    <h2 class="text-3xl font-bold mb-6">My Repositories</h2>
-
-    <div id="repo-container" class="space-y-4">
-        <!-- JS will insert repo cards here -->
-    </div>
-</section>
-
-<script>
-    // Fetch GitHub repos automatically
-    fetch("https://api.github.com/users/RenCupDev/repos")
-        .then(res => res.json())
-        .then(repos => {
-            const container = document.getElementById("repo-container");
-
-            repos.forEach(repo => {
-                const card = document.createElement("div");
-                card.className =
-                    "bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all";
-
-                card.innerHTML = `
-                    <h3 class="text-xl font-semibold">${repo.name}</h3>
-                    <p class="text-gray-400 mt-2">${repo.description || "No description"}</p>
-                    <a href="${repo.html_url}" target="_blank"
-                       class="text-indigo-400 hover:text-indigo-300 mt-3 inline-block">
-                       View on GitHub →
-                    </a>
-                `;
-
-                container.appendChild(card);
-            });
-        });
-</script>
-
-<!-- OTHER PROJECTS -->
-<section class="max-w-4xl mx-auto px-6 py-10">
-    <h2 class="text-3xl font-bold mb-6">Other Projects</h2>
+    <h2 class="text-3xl font-bold mb-6">Projects</h2>
 
     <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
         <img src="https://avatars.githubusercontent.com/u/318728657?s=200&v=4"
@@ -113,6 +79,41 @@
            		View Website →
         	</a>
    	 </div>
+</section>
+
+<script>
+    // Fetch GitHub repos automatically
+    fetch("https://api.github.com/users/RenCupDotDev/repos")
+        .then(res => res.json())
+        .then(repos => {
+            const container = document.getElementById("repo-container");
+
+            repos.forEach(repo => {
+                const card = document.createElement("div");
+                card.className =
+                    "bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-all";
+
+                card.innerHTML = `
+                    <h3 class="text-xl font-semibold">${repo.name}</h3>
+                    <p class="text-gray-400 mt-2">${repo.description || "No description"}</p>
+                    <a href="${repo.html_url}" target="_blank"
+                       class="text-indigo-400 hover:text-indigo-300 mt-3 inline-block">
+                       View on GitHub →
+                    </a>
+                `;
+
+                container.appendChild(card);
+            });
+        });
+</script>
+
+<!-- OTHER Repos -->
+<section class="max-w-4xl mx-auto px-6 py-10">
+    <h2 class="text-3xl font-bold mb-6">My Repositories</h2>
+
+    <div id="repo-container" class="space-y-4">
+        <!-- JS will insert repo cards here -->
+    </div>
 </section>
 
 
