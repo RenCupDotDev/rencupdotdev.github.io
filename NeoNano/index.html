@@ -123,7 +123,8 @@
       background: transparent; color: var(--taupe); border: 1px solid var(--border);
       border-radius: 6px; padding: 4px 10px; cursor: pointer;
     }
-    .copy:hover { color: var(--lavender); border-color: var(--lavender); }
+    .copy:hover { color: var(--lavender); border-color
+  <meta charset="utf-8": var(--lavender); }
     .note { color: var(--taupe); font-size: 15px; margin: 8px 0 0; }
     .note code { color: var(--lavender); }
 
@@ -230,7 +231,8 @@
       <div class="editor" role="img" aria-label="NeoNano editing a file">
         <div class="editor-top"><i></i><i></i><i></i><span>notes.md</span></div>
         <div class="header-bar"><span> NeoNano  notes.md *</span><span>5:12  6 lines </span></div>
-        <pre><div class="row"><span class="ln">1</span><span>  <span style="color:var(--lavender);font-weight:700"># Ideas for the weekend</span></span></div><div class="row"><span class="ln">2</span></div><div class="row"><span class="ln">3</span><span>- <span class="c-warn">TODO:</span> ship the palette</span></div><div class="row cur"><span class="ln">4</span><span>- plugins are <span class="sel">just folders</span></span></div><div class="row"><span class="ln">5</span><span class="c-dim">  def setup(api):</span></div><div class="row"><span class="ln">6</span></div></pre>
+        <pre><div class="row"><span class="ln">1</spa
+  <meta charset="utf-8"n><span>  <span style="color:var(--lavender);font-weight:700"># Ideas for the weekend</span></span></div><div class="row"><span class="ln">2</span></div><div class="row"><span class="ln">3</span><span>- <span class="c-warn">TODO:</span> ship the palette</span></div><div class="row cur"><span class="ln">4</span><span>- plugins are <span class="sel">just folders</span></span></div><div class="row"><span class="ln">5</span><span class="c-dim">  def setup(api):</span></div><div class="row"><span class="ln">6</span></div></pre>
       </div>
     </div>
   </div>
@@ -264,7 +266,7 @@
         <div class="feature">
           <div class="mark" style="background: var(--teal);">$</div>
           <h3>one-line install</h3>
-          <p>A Linux installer with update and uninstall, plus a Windows path with <code>pip install windows-curses</code>.</p>
+          <p>One installer that lets you pick pipx, uv, or native, with update and uninstall built in.</p>
         </div>
         <div class="feature">
           <div class="mark" style="background: var(--taupe);">0</div>
@@ -279,17 +281,27 @@
     <div class="wrap">
       <span class="eyebrow">// install</span>
       <h2>Install in one line.</h2>
-      <p class="sub">The installer checks Python first and prints the right package command if something is missing.</p>
+      <p class="sub">The installer asks how you want to install: pipx, uv, or native. Pick one and it does the rest.</p>
       <div class="install">
         <div class="cmd">
-          <span class="label">Linux, system-wide (uses sudo when needed)</span>
-          <code id="cmd-system">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash</code>
-          <button class="copy" data-target="cmd-system">Copy</button>
+          <span class="label">Linux, choose a method</span>
+          <code id="cmd-pick">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash</code>
+          <button class="copy" data-target="cmd-pick">Copy</button>
         </div>
         <div class="cmd">
-          <span class="label">Linux, without root</span>
-          <code id="cmd-user">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --user</code>
-          <button class="copy" data-target="cmd-user">Copy</button>
+          <span class="label">Linux, pipx directly (recommended)</span>
+          <code id="cmd-pipx">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --pipx</code>
+          <button class="copy" data-target="cmd-pipx">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Linux, uv directly</span>
+          <code id="cmd-uv">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --uv</code>
+          <button class="copy" data-target="cmd-uv">Copy</button>
+        </div>
+        <div class="cmd">
+          <span class="label">Linux, native directly (no pip)</span>
+          <code id="cmd-native">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --native</code>
+          <button class="copy" data-target="cmd-native">Copy</button>
         </div>
         <div class="cmd">
           <span class="label">Start it</span>
@@ -297,8 +309,8 @@
           <button class="copy" data-target="cmd-run">Copy</button>
         </div>
         <div class="cmd">
-          <span class="label">Windows, Python 3.11+</span>
-          <code id="cmd-win">pip install windows-curses</code>
+          <span class="label">Windows, Python 3.11+, from the repo folder</span>
+          <code id="cmd-win">pip install windows-curses &amp;&amp; pip install .</code>
           <button class="copy" data-target="cmd-win">Copy</button>
         </div>
         <div class="cmd">
@@ -311,7 +323,7 @@
           <code id="cmd-purge">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --purge</code>
           <button class="copy" data-target="cmd-purge">Copy</button>
         </div>
-        <p class="note">Run the install command again to update. Your config is kept.</p>
+        <p class="note">Run the install command again to update to the latest release. Your config is kept.</p>
       </div>
     </div>
   </section>
