@@ -1,381 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NeoNano: Nano, reimagined</title>
-  <meta name="description" content="NeoNano is a terminal text editor written in C with ncurses. Write like nano, command like vi, extend with plugins.">
-  <link rel="icon" href="logo.png">
-  <style>
-    /* palette: #2a2e45 navy, #9ba2ff lavender, #00c49a teal, #ed6a5a coral, #938274 taupe */
-    :root {
-      --navy: #2a2e45;
-      --lavender: #9ba2ff;
-      --teal: #00c49a;
-      --coral: #ed6a5a;
-      --taupe: #938274;
-      --border: rgba(147, 130, 116, 0.35);
-      --panel: rgba(0, 0, 0, 0.16);
-      --panel-deep: rgba(0, 0, 0, 0.28);
-      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NeoNano: Nano, reimagined</title>
+<meta name="description" content="NeoNano is a terminal text editor written in C with ncurses. You type like nano, command like vi, and extend it with plugins.">
+<link rel="icon" type="image/png" href="https://github.com/RenCupDotDev.png">
+<style>
+:root{
+  --bg:#070913;
+  --accent:#9ba2ff;
+  --teal:#00c49a;
+  --card:rgba(11,14,28,.78);
+  --border:rgba(155,162,255,.25);
+  --text:#e8e2d8;
+  --muted:#9aa0b4;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      background: var(--navy);
-      color: var(--lavender);
-      font-family: var(--sans);
-      font-size: 17px;
-      line-height: 1.6;
-    }
-    a { color: var(--teal); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    code, kbd, pre { font-family: var(--mono); }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+#sky{position:fixed;top:0;left:0;width:100%;height:30vh;image-rendering:pixelated;z-index:0;display:block}
+#fade{position:fixed;top:30vh;left:0;width:100%;height:28vh;pointer-events:none;z-index:0;
+  background:linear-gradient(to bottom,rgba(110,40,80,.5) 0%,rgba(30,20,50,.35) 35%,var(--bg) 100%)}
 
-    /* top bar */
-    header {
-      position: sticky; top: 0; z-index: 10;
-      background: var(--navy);
-      border-bottom: 1px solid var(--border);
-    }
-    header .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
-    .brand { display: flex; align-items: center; gap: 10px; color: var(--lavender); font-weight: 700; font-size: 18px; }
-    .brand:hover { text-decoration: none; }
-    .brand img { width: 26px; height: 26px; }
-    nav { display: flex; gap: 22px; }
-    nav a { color: var(--taupe); font-size: 15px; }
-    nav a:hover { color: var(--lavender); text-decoration: none; }
+main{position:relative;z-index:1;max-width:720px;margin-left:max(16px,6vw);padding:18vh 16px 90px}
 
-    /* hero */
-    .hero { text-align: center; padding: 80px 0 56px; }
-    .headline { display: flex; align-items: center; justify-content: center; gap: 28px; margin-bottom: 26px; }
-    .headline .logo { display: block; width: 112px; height: 112px; flex-shrink: 0; }
-    .headline h1 { text-align: left; margin: 0; }
-    h1 {
-      font-size: clamp(38px, 6.5vw, 64px);
-      line-height: 1.08; margin: 0 0 22px; letter-spacing: -0.02em; font-weight: 750;
-      color: var(--lavender);
-    }
-    .lead { color: var(--lavender); opacity: 0.85; font-size: 19px; margin: 0 auto 36px; max-width: 580px; }
-    .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn {
-      display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;
-      border: 1px solid var(--border); color: var(--lavender); background: transparent;
-    }
-    .btn:hover { text-decoration: none; border-color: var(--lavender); color: var(--lavender); }
-    .btn.primary { background: var(--teal); border-color: var(--teal); color: var(--navy); }
-    .btn.primary:hover { color: var(--navy); filter: brightness(1.06); }
-    .version { margin: 22px 0 0; font-family: var(--mono); font-size: 15px; color: var(--taupe); }
-    .version code { color: var(--teal); }
+.card{background:var(--card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.card h2{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;font-weight:600}
+.card p{line-height:1.5}
+.lead{color:var(--muted);font-size:14px;margin:0 0 14px}
 
-    /* editor mock */
-    .editor-wrap { padding: 0 0 24px; }
-    .editor {
-      background: var(--panel-deep); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
-    }
-    .editor-top { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
-    .editor-top i { width: 10px; height: 10px; border-radius: 50%; display: block; }
-    .editor-top i:nth-child(1) { background: var(--coral); }
-    .editor-top i:nth-child(2) { background: var(--taupe); }
-    .editor-top i:nth-child(3) { background: var(--teal); }
-    .editor-top span { margin-left: 12px; color: var(--taupe); font-family: var(--mono); font-size: 13px; }
-    .header-bar {
-      background: var(--taupe); color: var(--navy); font-family: var(--mono); font-size: 13px; font-weight: 700;
-      padding: 5px 16px; display: flex; justify-content: space-between;
-    }
-    .editor pre { margin: 0; padding: 12px 0; font-size: 14px; line-height: 1.6; overflow-x: auto; color: var(--lavender); }
-    .editor .row { display: flex; padding: 0 16px; min-width: max-content; }
-    .editor .row.cur { background: rgba(155, 162, 255, 0.12); }
-    .editor .ln { width: 34px; color: var(--taupe); text-align: right; padding-right: 14px; user-select: none; }
-    .editor .row.cur .ln { color: var(--teal); }
-    .c-warn { color: var(--coral); }
-    .c-dim { color: var(--taupe); }
-    .sel { background: var(--lavender); color: var(--navy); }
+.profile{display:flex;gap:16px;align-items:center}
+.avatar{width:72px;height:72px;border-radius:14px;border:2px solid var(--accent);flex:none;object-fit:contain;background:#0d1020;padding:4px}
+.avatar.round{border-radius:50%}
+.profile h1{font-family:var(--mono);font-size:22px;margin:0 0 2px}
+.handle{font-family:var(--mono);color:var(--muted);font-size:13px;margin:0 0 6px}
+.sub{font-size:14px;margin:0;line-height:1.45}
 
-    /* sections */
-    section { padding: 72px 0; border-top: 1px solid var(--border); }
-    .eyebrow { display: block; font-family: var(--mono); font-size: 13px; color: var(--teal); margin-bottom: 10px; }
-    h2 { font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.02em; margin: 0 0 14px; line-height: 1.1; color: var(--lavender); }
-    .sub { color: var(--lavender); opacity: 0.8; font-size: 18px; max-width: 640px; margin: 0 0 40px; }
+.dict{border-left:3px solid var(--accent);padding:10px 14px;margin-top:16px;background:rgba(0,0,0,.25);border-radius:0 8px 8px 0}
+.dict .word{font-family:var(--mono);font-size:15px;margin:0 0 8px}
+.dict .pos{color:var(--muted);font-size:13px}
+.dict ol{margin:0;padding-left:20px;font-size:14px;line-height:1.5}
+.dict li{margin-bottom:6px}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0;font-style:italic}
 
-    /* features */
-    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .feature { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-    .feature .mark {
-      width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
-      font-family: var(--mono); font-weight: 700; color: var(--navy); margin-bottom: 14px;
-    }
-    .feature h3 { margin: 0 0 8px; font-size: 18px; color: var(--lavender); }
-    .feature p { margin: 0; color: var(--lavender); opacity: 0.8; font-size: 15px; }
+.btn{font-family:var(--mono);font-size:13px;color:var(--text);background:transparent;border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;text-decoration:none;cursor:pointer;margin:4px 6px 4px 0;display:inline-block}
+.btn:hover,.btn:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#06130f}
+.btn.primary:hover{color:#06130f;filter:brightness(1.08)}
 
-    /* install */
-    .install { max-width: 760px; }
-    .cmd {
-      position: relative; background: var(--panel-deep); border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px 84px 14px 16px; margin-bottom: 14px;
-    }
-    .cmd code { display: block; font-size: 14px; color: var(--lavender); white-space: pre-wrap; word-break: break-all; }
-    .cmd .label { display: block; font-family: var(--sans); font-size: 13px; color: var(--taupe); margin-bottom: 6px; }
-    .copy {
-      position: absolute; right: 10px; top: 10px; font: inherit; font-size: 13px;
-      background: transparent; color: var(--taupe); border: 1px solid var(--border);
-      border-radius: 6px; padding: 4px 10px; cursor: pointer;
-    }
-    .copy:hover { color: var(--lavender); border-color: var(--lavender); }
-    .note { color: var(--taupe); font-size: 15px; margin: 8px 0 0; }
-    .note code { color: var(--lavender); }
+.version{font-family:var(--mono);font-size:13px;color:var(--muted);margin:14px 0 0}
+.version span{color:var(--teal)}
 
-    /* keys */
-    .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 22px; }
-    .panel h3 { font-size: 13px; color: var(--taupe); margin: 16px 0 4px; text-transform: uppercase; letter-spacing: 0.08em; }
-    table { width: 100%; border-collapse: collapse; font-size: 15px; }
-    td { padding: 10px 0; border-top: 1px solid var(--border); vertical-align: top; }
-    tr:first-child td { border-top: none; }
-    td:first-child { width: 44%; padding-right: 12px; }
-    td:last-child { color: var(--lavender); opacity: 0.85; }
-    kbd {
-      display: inline-block; background: var(--panel-deep); border: 1px solid var(--border);
-      border-radius: 5px; padding: 1px 7px; font-size: 13px; color: var(--teal); margin: 1px 0;
-    }
+.tag{font-family:var(--mono);font-size:11px;color:var(--accent);border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin-right:6px;display:inline-block;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;
+  border:1px solid var(--border);border-radius:999px;padding:6px 14px;margin:4px 6px 4px 0;background:rgba(0,0,0,.2)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
 
-    /* config and plugins */
-    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-    .code-block {
-      margin: 0; background: var(--panel-deep); border: 1px solid var(--border); border-radius: 12px;
-      padding: 20px 22px; font-size: 14px; line-height: 1.65; overflow-x: auto; color: var(--lavender);
-    }
-    .code-block .c { color: var(--taupe); }
-    .code-block .s { color: var(--teal); }
-    .code-block .k { color: var(--coral); }
-    .block-gap { margin-top: 20px; }
+.proj{border-top:1px solid var(--border);padding-top:14px;margin-top:14px}
+.proj.first{border-top:none;padding-top:0;margin-top:0}
+.proj h3{font-family:var(--mono);font-size:16px;margin:0 0 6px}
+.proj h3 a{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--accent)}
+.proj p{margin:0 0 8px;font-size:14px;line-height:1.5;color:#d6d0c4}
 
-    /* faq */
-    .faq { max-width: 760px; }
-    details { border-top: 1px solid var(--border); padding: 16px 0; }
-    details:last-of-type { border-bottom: 1px solid var(--border); }
-    summary { cursor: pointer; font-weight: 600; font-size: 17px; list-style: none; color: var(--lavender); }
-    summary::-webkit-details-marker { display: none; }
-    summary::after { content: " +"; color: var(--taupe); }
-    details[open] summary::after { content: " –"; }
-    details p { margin: 12px 0 0; color: var(--lavender); opacity: 0.85; }
-    .yes { color: var(--coral); font-weight: 700; border-bottom: 2px solid var(--coral); }
-    .yes:hover { text-decoration: none; opacity: 0.8; }
+/* install */
+.cmdrow{border-top:1px solid var(--border);padding:12px 0}
+.cmdrow:first-of-type{border-top:none;padding-top:0}
+.cmdrow .label{font-size:13px;color:var(--muted);margin:0 0 6px}
+.cmdrow .line{display:flex;gap:8px;align-items:flex-start}
+.cmdrow code{flex:1;font-family:var(--mono);font-size:12px;background:rgba(0,0,0,.35);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;word-break:break-all;color:var(--text)}
+.copy{font-family:var(--mono);font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border);
+  border-radius:8px;padding:7px 10px;cursor:pointer;flex:none}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
 
-    /* footer */
-    footer { border-top: 1px solid var(--border); padding: 32px 0 40px; color: var(--taupe); font-size: 14px; }
-    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; align-items: center; }
-    footer .links { display: flex; gap: 20px; }
-    footer a { color: var(--taupe); }
-    footer a:hover { color: var(--lavender); text-decoration: none; }
+/* keys */
+.keys{width:100%;border-collapse:collapse;font-size:14px}
+.keys td{padding:8px 0;border-top:1px solid var(--border);vertical-align:top}
+.keys tr:first-child td{border-top:none}
+.keys td:first-child{width:42%;padding-right:12px}
+.keys td:last-child{color:#d6d0c4}
+.sublabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+.sublabel:first-child{margin-top:0}
+kbd{font-family:var(--mono);font-size:12px;color:var(--teal);background:rgba(0,0,0,.35);border:1px solid var(--border);
+  border-radius:5px;padding:1px 6px;white-space:nowrap}
 
-    @media (max-width: 860px) {
-      .features { grid-template-columns: 1fr 1fr; }
-      .keys, .two { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 560px) {
-      .features { grid-template-columns: 1fr; }
-      nav a:not(.gh):not(.inst) { display: none; }
-      .hero { padding: 56px 0 44px; }
-      .headline { flex-direction: column; gap: 18px; }
-      .headline h1 { text-align: center; }
-      .headline .logo { width: 92px; height: 92px; }
-      section { padding: 56px 0; }
-      .editor pre { font-size: 12px; }
-      .cmd { padding-right: 16px; padding-bottom: 50px; }
-      .copy { top: auto; bottom: 10px; }
-      td:first-child { width: 50%; }
-    }
-  </style>
+/* code */
+pre.code{margin:0;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+  font-family:var(--mono);font-size:12.5px;line-height:1.6;overflow-x:auto;color:var(--text)}
+pre.code .c{color:var(--muted)}
+pre.code .k{color:#ed6a5a}
+pre.code .s{color:var(--teal)}
+code{font-family:var(--mono);font-size:.92em;color:var(--teal)}
+
+/* faq */
+details{border-top:1px solid var(--border);padding:12px 0}
+details:first-of-type{border-top:none;padding-top:0}
+summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:" +";color:var(--muted);font-family:var(--mono)}
+details[open] summary::after{content:" –"}
+details p{margin:8px 0 0;color:#d6d0c4;font-size:14px;line-height:1.55}
+.faqgroup{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 6px}
+.faqgroup:first-of-type{margin-top:0}
+.yes{color:#ed6a5a;font-weight:700;border-bottom:2px solid #ed6a5a;text-decoration:none}
+.yes:hover{opacity:.8}
+
+.madeby{display:flex;gap:16px;align-items:center}
+.madeby h3{font-family:var(--mono);font-size:18px;margin:0 0 4px}
+.madeby p{margin:0;font-size:14px;color:#d6d0c4}
+.madeby .links{margin-top:10px}
+
+a{color:var(--accent)}
+a:hover{color:var(--teal)}
+
+@media (max-width:600px){
+  main{margin-left:0;max-width:none;padding-left:12px;padding-right:12px}
+  .cmdrow .line{flex-direction:column}
+  .copy{align-self:flex-end}
+}
+</style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <a class="brand" href="#top" id="top"><img src="logo.png" alt="">NeoNano</a>
-    <nav>
-      <a class="inst" href="#install">Install</a>
-      <a href="#keys">Keys</a>
-      <a href="#config">Config</a>
-      <a href="#plugins">Plugins</a>
-      <a href="#faq">FAQ</a>
-      <a class="gh" href="https://github.com/RenCupDotDev/NeoNano">GitHub</a>
-    </nav>
-  </div>
-</header>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div id="fade" aria-hidden="true"></div>
 
 <main>
-  <div class="hero">
-    <div class="wrap">
-      <div class="headline">
-        <img class="logo" src="logo.png" alt="NeoNano logo">
-        <h1>Nano, reimagined.</h1>
-      </div>
-      <p class="lead">
-        A terminal editor that writes like nano and commands like vi.
-        Type, save with Ctrl+S, and press F1 for the <code>:</code> palette.
-        Colors, themes and every keybind live in one TOML file.
-      </p>
-      <div class="buttons">
-        <a class="btn primary" href="#install">Install NeoNano</a>
-        <a class="btn" href="https://github.com/RenCupDotDev/NeoNano">View on GitHub</a>
-      </div>
-      <p class="version">VERSION: <code id="nn-version">loading…</code></p>
-    </div>
-  </div>
 
-  <div class="editor-wrap">
-    <div class="wrap">
-      <div class="editor" role="img" aria-label="NeoNano editing a file">
-        <div class="editor-top"><i></i><i></i><i></i><span>notes.md</span></div>
-        <div class="header-bar"><span> NeoNano  notes.md *</span><span>5:12  6 lines </span></div>
-        <pre><div class="row"><span class="ln">1</span><span>  <span style="color:var(--lavender);font-weight:700"># Ideas for the weekend</span></span></div><div class="row"><span class="ln">2</span></div><div class="row"><span class="ln">3</span><span>- <span class="c-warn">TODO:</span> ship the palette</span></div><div class="row cur"><span class="ln">4</span><span>- plugins are <span class="sel">shared objects</span></span></div><div class="row"><span class="ln">5</span><span class="c-dim">  loaded from ~/.nnanoplugins</span></div><div class="row"><span class="ln">6</span></div></pre>
+  <!-- PROFILE: NeoNano -->
+  <section class="card" id="top">
+    <div class="profile">
+      <img class="avatar" src="https://raw.githubusercontent.com/RenCupDotDev/NeoNano/refs/heads/main/neonano/assets/logo.png" alt="NeoNano logo">
+      <div>
+        <h1>NeoNano</h1>
+        <p class="handle">Nano, reimagined</p>
+        <p class="sub">A terminal text editor written in C with ncurses.</p>
       </div>
     </div>
-  </div>
 
-  <section id="features">
-    <div class="wrap">
-      <span class="eyebrow">// why NeoNano</span>
-      <h2>Familiar on day one.</h2>
-      <p class="sub">No modes to learn before you can type. The power is there when you reach for it.</p>
-      <div class="features">
-        <div class="feature">
-          <div class="mark" style="background: var(--teal);">Aa</div>
-          <h3>nano-style writing</h3>
-          <p>Type straight away. Undo, redo, mark and select, cut, copy, paste, find, and go to line, all on Ctrl and Alt keys.</p>
-        </div>
-        <div class="feature">
-          <div class="mark" style="background: var(--lavender);">:</div>
-          <h3>vi-style palette</h3>
-          <p>F1 opens a <code>:</code> prompt. Save, open, find, go to a line, switch themes, count words, or reopen the config with <code>cfg</code>.</p>
-        </div>
-        <div class="feature">
-          <div class="mark" style="background: var(--coral);">{ }</div>
-          <h3>configure everything</h3>
-          <p>Line numbers on the left or right, relative numbers, themes, per-color overrides, and every keybind, in one TOML file.</p>
-        </div>
-        <div class="feature">
-          <div class="mark" style="background: var(--lavender);">so</div>
-          <h3>plugins are shared objects</h3>
-          <p>Build a plugin from the template, drop the <code>.so</code> in <code>~/.nnanoplugins</code>, and enable it by name in your config.</p>
-        </div>
-        <div class="feature">
-          <div class="mark" style="background: var(--teal);">$</div>
-          <h3>one-line install</h3>
-          <p>One script installs NeoNano from its GitHub release, checks every download against GitHub's sha256, and updates it later. It can also install the NeoNanoQOL plugins.</p>
-        </div>
-        <div class="feature">
-          <div class="mark" style="background: var(--taupe);">C</div>
-          <h3>small and native</h3>
-          <p>Written in C with ncurses. No interpreter and no runtime to install.</p>
-        </div>
-      </div>
+    <div class="dict">
+      <p class="word">neo·nano <span class="pos">(noun)</span></p>
+      <ol>
+        <li>Type right away, the way you would in nano. Ctrl shortcuts, no modes.</li>
+        <li>Press F1 for a vi-style <code>:</code> palette when you need more.</li>
+        <li>Extend it with <code>.so</code> plugins loaded by name.</li>
+      </ol>
+      <p class="note">Written in C with ncurses. No interpreter to install.</p>
+    </div>
+
+    <div style="margin-top:14px">
+      <a class="btn primary" href="#install">Install</a>
+      <a class="btn" href="https://github.com/RenCupDotDev/NeoNano" target="_blank" rel="noopener">GitHub ↗</a>
+      <a class="btn" href="#keys">Keys</a>
+      <button class="btn" id="openCmd" type="button">F1 · command palette</button>
+    </div>
+    <p class="version">VERSION: <span id="nn-version">loading…</span></p>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="card">
+    <h2>Why it's different</h2>
+    <span class="pill"><span class="dot" style="background:#9ba2ff"></span>nano-style writing</span>
+    <span class="pill"><span class="dot" style="background:#00c49a"></span>vi-style palette</span>
+    <span class="pill"><span class="dot" style="background:#ed6a5a"></span>one TOML config</span>
+    <span class="pill"><span class="dot" style="background:#938274"></span>.so plugins</span>
+    <div class="proj">
+      <h3>Familiar on day one</h3>
+      <p>No modes to learn before you can type. Undo, redo, mark and select, cut, copy, paste, find and go to line are all on Ctrl and Alt keys.</p>
+    </div>
+    <div class="proj">
+      <h3>The palette</h3>
+      <p>F1 opens a <code>:</code> prompt. Save, open, find, go to a line, switch themes, count words, or open the config with <code>cfg</code>.</p>
+    </div>
+    <div class="proj">
+      <h3>Configure everything</h3>
+      <p>Line numbers, relative numbers, themes, color overrides and every keybind, in one TOML file.</p>
     </div>
   </section>
 
-  <section id="install">
-    <div class="wrap">
-      <span class="eyebrow">// install</span>
-      <h2>Install in one line.</h2>
-      <p class="sub">The script needs no source code. It reads the latest NeoNano release, checks the download against GitHub's sha256, and installs it. Then it asks whether you want the NeoNanoQOL plugins.</p>
-      <div class="install">
-        <div class="cmd">
-          <span class="label">Install (asks about NeoNanoQOL)</span>
-          <code id="cmd-install">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash</code>
-          <button class="copy" data-target="cmd-install">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Install with the NeoNanoQOL plugins</span>
-          <code id="cmd-qol">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --qol</code>
-          <button class="copy" data-target="cmd-qol">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Install system-wide (needs sudo)</span>
-          <code id="cmd-system">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | sudo bash -s -- --system</code>
-          <button class="copy" data-target="cmd-system">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Update (applies updates without asking)</span>
-          <code id="cmd-update">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --update</code>
-          <button class="copy" data-target="cmd-update">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Preview, change nothing</span>
-          <code id="cmd-dry">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --dry-run --qol</code>
-          <button class="copy" data-target="cmd-dry">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Start it</span>
-          <code id="cmd-run">nnano notes.txt</code>
-          <button class="copy" data-target="cmd-run">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Uninstall (keeps your config)</span>
-          <code id="cmd-uninstall">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --uninstall</code>
-          <button class="copy" data-target="cmd-uninstall">Copy</button>
-        </div>
-        <div class="cmd">
-          <span class="label">Uninstall and delete your config</span>
-          <code id="cmd-purge">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --purge</code>
-          <button class="copy" data-target="cmd-purge">Copy</button>
-        </div>
-        <p class="note">Needs Linux on x86_64, with <code>curl</code>, <code>jq</code>, <code>sha256sum</code> and <code>libncursesw</code>. Run the install command again to check for updates. Your config is kept.</p>
+  <!-- INSTALL -->
+  <section class="card" id="install">
+    <h2>Install</h2>
+    <p class="lead">The script needs no source code. It reads the latest NeoNano release, checks every download against GitHub's sha256 digest, and installs it. Then it asks whether you want the NeoNanoQOL plugins.</p>
+
+    <div class="cmdrow">
+      <p class="label">Install (asks about NeoNanoQOL)</p>
+      <div class="line">
+        <code id="cmd-install">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash</code>
+        <button class="copy" data-target="cmd-install">Copy</button>
       </div>
     </div>
-  </section>
-
-  <section id="keys">
-    <div class="wrap">
-      <span class="eyebrow">// keybinds</span>
-      <h2>The defaults.</h2>
-      <p class="sub">Everything here can be remapped in the <code>[keys]</code> table of your config.</p>
-      <div class="keys">
-        <div class="panel">
-          <h3>Writing</h3>
-          <table>
-            <tr><td><kbd>Ctrl+S</kbd></td><td>Save</td></tr>
-            <tr><td><kbd>Ctrl+X</kbd></td><td>Quit (refused if there are unsaved changes)</td></tr>
-            <tr><td><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></td><td>Undo, redo</td></tr>
-            <tr><td><kbd>Ctrl+D</kbd></td><td>Delete line</td></tr>
-            <tr><td><kbd>Alt+D</kbd></td><td>Duplicate line</td></tr>
-            <tr><td><kbd>Tab</kbd> <kbd>Shift+Tab</kbd></td><td>Indent, unindent</td></tr>
-            <tr><td><kbd>Alt+B</kbd> <kbd>Alt+F</kbd></td><td>Word left, word right</td></tr>
-            <tr><td><kbd>Alt+&lt;</kbd> <kbd>Alt+&gt;</kbd></td><td>Start, end of file</td></tr>
-          </table>
-        </div>
-        <div class="panel">
-          <h3>Selection and search</h3>
-          <table>
-            <tr><td><kbd>Ctrl+T</kbd></td><td>Set or clear the mark</td></tr>
-            <tr><td><kbd>Alt+A</kbd></td><td>Select all</td></tr>
-            <tr><td><kbd>Ctrl+K</kbd> <kbd>Alt+C</kbd> <kbd>Ctrl+U</kbd></td><td>Cut, copy, paste</td></tr>
-            <tr><td><kbd>Ctrl+F</kbd> <kbd>F3</kbd></td><td>Find, find next</td></tr>
-            <tr><td><kbd>Ctrl+G</kbd></td><td>Go to line</td></tr>
-          </table>
-          <h3>View</h3>
-          <table>
-            <tr><td><kbd>Alt+N</kbd> <kbd>Alt+L</kbd> <kbd>Alt+H</kbd></td><td>Line numbers, relative numbers, current-line highlight</td></tr>
-            <tr><td><kbd>Alt+T</kbd></td><td>Cycle themes</td></tr>
-            <tr><td><kbd>Alt+W</kbd></td><td>Word count</td></tr>
-            <tr><td><kbd>F1</kbd></td><td>Open the <code>:</code> palette</td></tr>
-          </table>
-        </div>
+    <div class="cmdrow">
+      <p class="label">Install with the NeoNanoQOL plugins</p>
+      <div class="line">
+        <code id="cmd-qol">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --qol</code>
+        <button class="copy" data-target="cmd-qol">Copy</button>
       </div>
     </div>
+    <div class="cmdrow">
+      <p class="label">Install system-wide (needs sudo)</p>
+      <div class="line">
+        <code id="cmd-system">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | sudo bash -s -- --system</code>
+        <button class="copy" data-target="cmd-system">Copy</button>
+      </div>
+    </div>
+    <div class="cmdrow">
+      <p class="label">Update, applying without asking</p>
+      <div class="line">
+        <code id="cmd-update">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --update</code>
+        <button class="copy" data-target="cmd-update">Copy</button>
+      </div>
+    </div>
+    <div class="cmdrow">
+      <p class="label">Preview, change nothing</p>
+      <div class="line">
+        <code id="cmd-dry">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --dry-run --qol</code>
+        <button class="copy" data-target="cmd-dry">Copy</button>
+      </div>
+    </div>
+    <div class="cmdrow">
+      <p class="label">Uninstall (keeps your config)</p>
+      <div class="line">
+        <code id="cmd-uninstall">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --uninstall</code>
+        <button class="copy" data-target="cmd-uninstall">Copy</button>
+      </div>
+    </div>
+    <div class="cmdrow">
+      <p class="label">Uninstall and delete your config</p>
+      <div class="line">
+        <code id="cmd-purge">curl -fsSL https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/install.sh | bash -s -- --purge</code>
+        <button class="copy" data-target="cmd-purge">Copy</button>
+      </div>
+    </div>
+    <div class="cmdrow">
+      <p class="label">Start it</p>
+      <div class="line">
+        <code id="cmd-run">nnano notes.txt</code>
+        <button class="copy" data-target="cmd-run">Copy</button>
+      </div>
+    </div>
+    <p class="lead" style="margin:14px 0 0">Needs Linux on x86_64, with <code>curl</code>, <code>jq</code>, <code>sha256sum</code> and <code>libncursesw</code>.</p>
   </section>
 
-  <section id="config">
-    <div class="wrap">
-      <span class="eyebrow">// config</span>
-      <h2>One TOML file for everything.</h2>
-      <p class="sub">Created on first run in <code>~/.config/neonano/</code>. Open it with <kbd>Alt+I</kbd> or <code>cfg</code>, then apply with <kbd>Alt+K</kbd> or <code>reload</code>.</p>
-      <div class="two">
-        <pre class="code-block"><span class="c"># config.toml</span>
+  <!-- KEYS -->
+  <section class="card" id="keys">
+    <h2>Keys</h2>
+    <p class="lead">The defaults. Every one can be remapped in the <code>[keys]</code> table of your config.</p>
+
+    <div class="sublabel">Writing</div>
+    <table class="keys">
+      <tr><td><kbd>Ctrl+S</kbd></td><td>Save</td></tr>
+      <tr><td><kbd>Ctrl+X</kbd></td><td>Quit. With unsaved changes it warns first, and a second press discards them</td></tr>
+      <tr><td><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></td><td>Undo, redo</td></tr>
+      <tr><td><kbd>Ctrl+D</kbd></td><td>Delete line</td></tr>
+      <tr><td><kbd>Alt+D</kbd></td><td>Duplicate line</td></tr>
+      <tr><td><kbd>Tab</kbd> <kbd>Shift+Tab</kbd></td><td>Indent, unindent</td></tr>
+      <tr><td><kbd>Alt+B</kbd> <kbd>Alt+F</kbd></td><td>Word left, word right</td></tr>
+      <tr><td><kbd>Alt+&lt;</kbd> <kbd>Alt+&gt;</kbd></td><td>Start, end of file</td></tr>
+    </table>
+
+    <div class="sublabel">Selection and search</div>
+    <table class="keys">
+      <tr><td><kbd>Ctrl+T</kbd></td><td>Set or clear the mark</td></tr>
+      <tr><td><kbd>Alt+A</kbd></td><td>Select all</td></tr>
+      <tr><td><kbd>Ctrl+K</kbd> <kbd>Alt+C</kbd> <kbd>Ctrl+U</kbd></td><td>Cut, copy, paste</td></tr>
+      <tr><td><kbd>Ctrl+F</kbd> <kbd>F3</kbd></td><td>Find, find next</td></tr>
+      <tr><td><kbd>Ctrl+G</kbd></td><td>Go to line</td></tr>
+    </table>
+
+    <div class="sublabel">View</div>
+    <table class="keys">
+      <tr><td><kbd>Alt+N</kbd> <kbd>Alt+L</kbd> <kbd>Alt+H</kbd></td><td>Line numbers, relative numbers, current-line highlight</td></tr>
+      <tr><td><kbd>Alt+T</kbd></td><td>Cycle themes</td></tr>
+      <tr><td><kbd>Alt+W</kbd></td><td>Word count</td></tr>
+      <tr><td><kbd>Alt+I</kbd> <kbd>Alt+K</kbd></td><td>Open config, reload config</td></tr>
+      <tr><td><kbd>F1</kbd></td><td>Open the <code>:</code> palette</td></tr>
+    </table>
+  </section>
+
+  <!-- CONFIG -->
+  <section class="card" id="config">
+    <h2>Config</h2>
+    <p class="lead">One TOML file, created on first run in <code>~/.config/neonano/</code>. Open it with <kbd>Alt+I</kbd> or <code>cfg</code>, then apply with <kbd>Alt+K</kbd> or <code>reload</code>.</p>
+    <pre class="code"><span class="c"># config.toml</span>
 <span class="k">theme</span> = <span class="s">"neonano"</span>
 
 <span class="k">[editor]</span>
@@ -395,8 +307,8 @@
 
 <span class="k">[plugins]</span>
 <span class="k">enabled</span> = [<span class="s">"hello"</span>]</pre>
-        <pre class="code-block"><span class="c"># from the F1 palette, live</span>
-<span class="s">goto 42</span>
+    <p class="lead" style="margin:14px 0 8px">From the palette, live:</p>
+    <pre class="code"><span class="s">goto 42</span>
 <span class="s">theme mytheme</span>
 <span class="s">reload</span>
 
@@ -404,16 +316,13 @@
 <span class="k">[colors]</span>
 <span class="k">background</span> = <span class="s">"#1e1e2e"</span>
 <span class="k">text</span> = <span class="s">"#cdd6f4"</span></pre>
-      </div>
-    </div>
   </section>
 
-  <section id="plugins">
-    <div class="wrap">
-      <span class="eyebrow">// plugins</span>
-      <h2>A plugin is a shared object.</h2>
-      <p class="sub">Build a <code>.so</code> from the <code>NeoNano-Plugin-Template</code> repository, copy it to <code>~/.nnanoplugins/</code>, add its name to <code>[plugins] enabled</code>, and restart. The NeoNanoQOL repository has ready-made plugins for a directory tree, a terminal pane, a welcome page, a word counter and language servers.</p>
-      <pre class="code-block"><span class="c">#include "plugin.h"</span>
+  <!-- PLUGINS -->
+  <section class="card" id="plugins">
+    <h2>Plugins</h2>
+    <p class="lead">Build a <code>.so</code> from the <code>NeoNano-Plugin-Template</code> repository, copy it to <code>~/.nnanoplugins/</code>, add its name to <code>[plugins] enabled</code>, and restart. The <code>NeoNanoQOL</code> repository has ready-made plugins for a directory tree, a terminal pane, a welcome page, a word counter and language servers.</p>
+    <pre class="code"><span class="c">#include "plugin.h"</span>
 
 <span class="k">static const</span> PluginAPI *api;
 
@@ -430,63 +339,434 @@
     a-&gt;add_command(<span class="s">"hello"</span>, <span class="s">"hello [name]  greet and show the line count"</span>, cmd_hello);
     a-&gt;bind_key(<span class="s">"f10"</span>, <span class="s">"hello"</span>);
 }</pre>
-    </div>
   </section>
 
-  <section id="faq">
-    <div class="wrap">
-      <span class="eyebrow">// faq</span>
-      <h2>Questions.</h2>
-      <div class="faq">
-        <details>
-          <summary>Is it bad?</summary>
-          <p><a class="yes" href="https://rickroll.it" target="_blank" rel="noopener">Check Here</a></p>
-        </details>
-        <details>
-          <summary>Does it work on Windows?</summary>
-          <p>Not yet. The installer supports Linux on x86_64 only.</p>
-        </details>
-        <details>
-          <summary>What license is it under?</summary>
-          <p>GPL-3.0.</p>
-        </details>
+  <!-- FAQ -->
+  <section class="card" id="faq">
+    <h2>FAQ</h2>
+
+    <div class="faqgroup">About</div>
+    <details>
+      <summary>Is it bad?</summary>
+      <p><a class="yes" href="https://rickroll.it" target="_blank" rel="noopener">Check here</a></p>
+    </details>
+    <details>
+      <summary>What is NeoNano?</summary>
+      <p>A terminal text editor written in C with ncurses. You type the way you would in nano, and F1 opens a vi-style <code>:</code> palette for commands such as save, find, go to line and theme switching.</p>
+    </details>
+    <details>
+      <summary>Why the name?</summary>
+      <p>It is nano, rebuilt. The "neo" is the reimagining: the same easy typing, with a command palette and plugins on top.</p>
+    </details>
+    <details>
+      <summary>What license is it under?</summary>
+      <p>GPL-3.0. The NeoNano-Plugin-Template repository is MIT, so you can start a plugin from it under any license you like.</p>
+    </details>
+    <details>
+      <summary>Do I need to know C to use it?</summary>
+      <p>No. Using NeoNano needs nothing but the binary. C only matters if you want to write a plugin.</p>
+    </details>
+
+    <div class="faqgroup">Installing and updating</div>
+    <details>
+      <summary>How do I install it?</summary>
+      <p>Run the one-line command in the Install section. The script downloads the latest release from GitHub, checks it, installs <code>nnano</code> to <code>~/.local/bin</code>, and asks whether you want the NeoNanoQOL plugins.</p>
+    </details>
+    <details>
+      <summary>Do I need root or sudo?</summary>
+      <p>No. The default install is for your user only. Add <code>--system</code> and run it with <code>sudo</code> to install for every user, under <code>/usr/local</code>.</p>
+    </details>
+    <details>
+      <summary>What does the installer check?</summary>
+      <p>Every download is compared against the sha256 digest GitHub publishes for that release asset. If the digest is missing or does not match, the file is deleted and nothing is installed.</p>
+    </details>
+    <details>
+      <summary>What do I need installed first?</summary>
+      <p>Linux on x86_64, plus <code>curl</code>, <code>jq</code>, <code>sha256sum</code>, <code>install</code>, <code>awk</code> and <code>libncursesw</code>. The script checks for these and stops with a message if one is missing.</p>
+    </details>
+    <details>
+      <summary>How do I update?</summary>
+      <p>Run the install command again. If a newer release exists, the script asks before updating. Add <code>--update</code> to apply it without asking. Your config is kept.</p>
+    </details>
+    <details>
+      <summary>How do I see which version I have?</summary>
+      <p>Run <code>nnano --version</code>. The version is compiled in from the <code>VERSION</code> file. The label at the top of this page shows the latest one on GitHub.</p>
+    </details>
+    <details>
+      <summary>How do I uninstall it?</summary>
+      <p>Run the script with <code>--uninstall</code>. It removes the program and any plugins it installed, and restores files it had backed up. Your config stays. Use <code>--purge</code> to delete the config too.</p>
+    </details>
+    <details>
+      <summary>Can I see what it would do first?</summary>
+      <p>Yes. Add <code>--dry-run</code> and the script prints every step without changing anything.</p>
+    </details>
+    <details>
+      <summary>Does it work on Windows or macOS?</summary>
+      <p>The installer supports Linux on x86_64 only. The source is C with ncurses, so building it elsewhere may be possible, but it is not supported yet.</p>
+    </details>
+
+    <div class="faqgroup">Using it</div>
+    <details>
+      <summary>How do I quit without saving?</summary>
+      <p>Press <kbd>Ctrl+X</kbd>. With unsaved changes it warns and asks you to press it again. The second press discards them. Or use <code>discard</code> in the palette.</p>
+    </details>
+    <details>
+      <summary>Does it autosave?</summary>
+      <p>No. Save with <kbd>Ctrl+S</kbd> or <code>write</code>.</p>
+    </details>
+    <details>
+      <summary>How many undo steps are there?</summary>
+      <p>500 by default. Set <code>undo_levels</code> in the <code>[editor]</code> section to any value from 1 to 2000.</p>
+    </details>
+    <details>
+      <summary>What is the <code>:</code> palette?</summary>
+      <p>Press <kbd>F1</kbd> and type a command. The main ones are <code>write</code>, <code>saveas</code>, <code>open</code>, <code>exit</code>, <code>discard</code>, <code>find</code>, <code>goto</code>, <code>theme</code>, <code>reload</code>, <code>wc</code>, <code>cfg</code>, <code>plugins</code> and <code>help</code>.</p>
+    </details>
+    <details>
+      <summary>Can I change the keys?</summary>
+      <p>Yes. Add the action to the <code>[keys]</code> table of your config with a list of keys, for example <code>save = ["ctrl+s", "f2"]</code>, then run <code>reload</code>.</p>
+    </details>
+    <details>
+      <summary>Can I show line numbers?</summary>
+      <p>Yes. Press <kbd>Alt+N</kbd> to toggle them, <kbd>Alt+L</kbd> for relative numbers. In the config, <code>line_numbers</code> in the <code>[view]</code> section takes <code>"none"</code>, <code>"left"</code> or <code>"right"</code>.</p>
+    </details>
+    <details>
+      <summary>Where is my config?</summary>
+      <p><code>~/.config/neonano/config.toml</code>. Open it with <kbd>Alt+I</kbd> or <code>cfg</code>. Changes apply after <kbd>Alt+K</kbd> or <code>reload</code>.</p>
+    </details>
+    <details>
+      <summary>How do I make my own theme?</summary>
+      <p>Create <code>~/.config/neonano/themes/&lt;name&gt;.toml</code> with a <code>[colors]</code> section, then switch to it with <code>theme &lt;name&gt;</code>. Press <kbd>Alt+T</kbd> to cycle through the themes you have.</p>
+    </details>
+    <details>
+      <summary>Does the editor count words?</summary>
+      <p>Yes. Press <kbd>Alt+W</kbd> or run <code>wc</code>.</p>
+    </details>
+
+    <div class="faqgroup">Plugins</div>
+    <details>
+      <summary>Where do plugins go?</summary>
+      <p>NeoNano looks in <code>~/.nnanoplugins/&lt;name&gt;.so</code> first, then in the system plugin directory, <code>/usr/local/lib/neonano/plugins</code> by default. A plugin runs only when its name is in <code>[plugins] enabled</code>.</p>
+    </details>
+    <details>
+      <summary>Are plugins safe?</summary>
+      <p>A plugin is native code loaded into the editor, so it can do anything the editor can. Install only plugins you trust, and read the source of anything you did not write.</p>
+    </details>
+    <details>
+      <summary>Which plugins exist?</summary>
+      <p>The NeoNanoQOL repository has a directory tree, a terminal pane, a welcome page, a word counter and language server support. The installer can add them for you with <code>--qol</code>.</p>
+    </details>
+    <details>
+      <summary>How do I write one?</summary>
+      <p>Start from the <code>NeoNano-Plugin-Template</code> repository. It has a working example and a build that needs only the plugin header. The example above shows the shape: a command, a key binding, and the API version check.</p>
+    </details>
+
+    <div class="faqgroup">Project</div>
+    <details>
+      <summary>Where do I report a bug?</summary>
+      <p>Open an issue on <a href="https://github.com/RenCupDotDev/NeoNano/issues" target="_blank" rel="noopener">the GitHub issues page</a>. Include your version from <code>nnano --version</code> and the steps to reproduce.</p>
+    </details>
+    <details>
+      <summary>Can I contribute?</summary>
+      <p>Yes. Pull requests and issues are welcome on the GitHub repository. The user guide and architecture notes are in the <code>docs</code> folder.</p>
+    </details>
+    <details>
+      <summary>Why is the VERSION label "unknown"?</summary>
+      <p>The page reads the <code>VERSION</code> file from GitHub when it loads. If GitHub cannot be reached, or the file cannot be read, it shows "unknown".</p>
+    </details>
+  </section>
+
+  <!-- MADE BY -->
+  <section class="card" id="madeby">
+    <h2>Made By</h2>
+    <div class="madeby">
+      <img class="avatar round" src="https://github.com/RenCupDotDev.png" alt="RenCupDotDev avatar">
+      <div>
+        <h3>RenCupDotDev</h3>
+        <p>Hi, I'm RenCup. I'm a developer from Italy. I build lightweight C tools and mobile mods, and I use Arch btw.</p>
+        <div class="links">
+          <a class="btn" href="https://rencupdotdev.github.io/" target="_blank" rel="noopener">Website ↗</a>
+          <a class="btn" href="https://github.com/RenCupDotDev" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
       </div>
     </div>
   </section>
+
 </main>
 
-<footer>
-  <div class="wrap">
-    <div>NeoNano · GPL-3.0</div>
-    <div class="links">
-      <a href="https://github.com/RenCupDotDev/NeoNano">GitHub</a>
-      <a href="https://github.com/RenCupDotDev/NeoNano/blob/main/docs/USER_GUIDE.md">User guide</a>
-      <a href="https://github.com/RenCupDotDev/NeoNano/issues">Issues</a>
-    </div>
-  </div>
-</footer>
+<!-- F1 COMMAND PALETTE -->
+<div id="cmd" style="position:fixed;left:0;right:0;bottom:0;background:rgba(7,9,19,.97);border-top:1px solid var(--accent);font-family:var(--mono);padding:10px 16px;display:none;z-index:10">
+  <div id="cmdOut" style="color:var(--muted);font-size:12px;margin-bottom:6px;min-height:16px">commands: :install :keys :config :plugins :faq :github :madeby :coffee :cat :q</div>
+  <input id="cmdIn" type="text" value=":" autocomplete="off" spellcheck="false" aria-label="command"
+         style="width:100%;background:transparent;border:none;color:var(--accent);font-family:var(--mono);font-size:16px;outline:none">
+</div>
 
 <script>
-  // The VERSION file of the NeoNano repo (main branch).
-  fetch("https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/VERSION", { cache: "no-store" })
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.text();
-    })
-    .then(text => { document.getElementById("nn-version").textContent = text.trim() || "unknown"; })
-    .catch(() => { document.getElementById("nn-version").textContent = "unknown"; });
-</script>
+/* ---------- pixel sky + cat (same engine as the personal page) ---------- */
+const canvas = document.getElementById('sky');
+const ctx = canvas.getContext('2d');
+const bg = document.createElement('canvas');
+const bctx = bg.getContext('2d');
+const P = 4;                 // CSS px per logical pixel
+let W = 0, H = 0, roofBase = 0;
 
-<script>
-  document.querySelectorAll('.copy').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var text = document.getElementById(btn.dataset.target).textContent;
-      navigator.clipboard.writeText(text).then(function () {
-        btn.textContent = 'Copied';
-        setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
-      });
+const BANDS = [0, 0.28, 0.48, 0.66, 0.84];
+const BAND_COLORS = [
+  [8, 10, 30],     // deep navy
+  [34, 30, 82],    // indigo
+  [104, 38, 92],   // plum
+  [206, 92, 84],   // coral
+  [250, 196, 150]  // pale peach
+];
+
+function skyColor(x, y, t) {
+  let i = 0;
+  while (i < BANDS.length - 1 && t >= BANDS[i + 1]) i++;
+  let idx = i;
+  const checker = ((x + y) & 1) === 1;
+  if (i > 0 && t - BANDS[i] < 0.035 && checker) idx = i - 1;                       // dither top edge
+  if (i < BANDS.length - 1 && BANDS[i + 1] - t < 0.035 && checker) idx = i + 1;    // dither bottom edge
+  return BAND_COLORS[idx];
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function roofAt(x) {
+  let r = roofBase;
+  if (x > W * 0.66 && x < W * 0.9) r -= 2;   // raised block on the rooftop
+  return r;
+}
+
+function buildBackground() {
+  W = Math.ceil(innerWidth / P);
+  H = Math.ceil(innerHeight * 0.3 / P);
+  canvas.width = bg.width = W;
+  canvas.height = bg.height = H;
+  roofBase = Math.round(H * 0.9);
+
+  const img = bctx.createImageData(W, H);
+  const d = img.data;
+  const sx = W * 0.74, sy = H * 0.7, sr = H * 0.42;
+
+  for (let y = 0; y < H; y++) {
+    const t = y / H;
+    for (let x = 0; x < W; x++) {
+      const c = skyColor(x, y, t);
+      let r = c[0], g = c[1], b = c[2];
+
+      // sun with horizontal scanline gaps
+      const dx = x - sx, dy = y - sy;
+      if (dx * dx + dy * dy < sr * sr) {
+        const skipLine = y > sy - sr * 0.25 && (y % 3 === 2);
+        if (!skipLine) {
+          const k = Math.min(1, Math.max(0, (y - (sy - sr)) / (2 * sr)));
+          r = 255; g = lerp(240, 130, k); b = lerp(190, 110, k);
+        }
+      }
+
+      // dark rooftop / skyline silhouette
+      if (y >= roofAt(x)) { r = 20; g = 12; b = 26; }
+
+      const o = (y * W + x) * 4;
+      d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
+    }
+  }
+  bctx.putImageData(img, 0, 0);
+}
+
+const COL = { '#': '#050508', a: '#9ba2ff', '-': '#2a2a50' };
+
+// 0 = empty, '#' = silhouette, 'a' = eye, '-' = closed eye
+const SIT = [
+  '..#....#..',
+  '..##..##..',
+  '..######..',
+  '..#a##a#..',
+  '..######..',
+  '...####...',
+  '..######..',
+  '.########.',
+  '.########.',
+  '..######..',
+  '..##..##..',
+  '..##..##..'
+];
+const CURL = [
+  '..######..',
+  '.########.',
+  '##########',
+  '#########.',
+  '.########.',
+  '..######..'
+];
+const SLEEP = [
+  '..##........',
+  '.#####......',
+  '###-#######.',
+  '#############',
+  '#############'
+];
+const TAIL_DOWN = [[9, 10], [9, 11], [8, 11]];
+const TAIL_UP = [[9, 9], [9, 8], [9, 7], [8, 6]];
+
+function drawSprite(rows, x0, roofY, opts = {}) {
+  const y0 = roofY - rows.length;
+  rows.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) {
+      let ch = row[c];
+      if (ch === '.') continue;
+      if (ch === 'a' && opts.blink) ch = '#';
+      ctx.fillStyle = COL[ch] || COL['#'];
+      ctx.fillRect(x0 + c, y0 + r, 1, 1);
+    }
+  });
+  (opts.tail || []).forEach(([dx, dy]) => {
+    ctx.fillStyle = COL['#'];
+    ctx.fillRect(x0 + dx, y0 + dy, 1, 1);
+  });
+}
+
+// cat behaviour: sit -> curl -> sleep, loops; :cat forces sleep
+const STATES = [['sit', 5000], ['curl', 3500], ['sleep', 6000]];
+let stateIdx = 0, stateStart = performance.now(), forcedUntil = 0;
+let zs = [], lastZ = 0;
+
+function currentState(now) {
+  if (now < forcedUntil) return 'sleep';
+  if (STATES[stateIdx][0] === 'sleep') return 'sleep';   // once asleep, stay asleep
+  if (now - stateStart > STATES[stateIdx][1]) {
+    stateIdx = (stateIdx + 1) % STATES.length;
+    stateStart = now;
+  }
+  return STATES[stateIdx][0];
+}
+
+function frame(now) {
+  ctx.drawImage(bg, 0, 0);
+
+  const catX = Math.round(W * 0.8) - 5;
+  const roof = roofAt(catX + 5);
+  const st = currentState(now);
+
+  if (st === 'sit') {
+    const blink = (now % 3800) < 140;
+    const tailUp = (now % 1600) < 260;
+    drawSprite(SIT, catX, roof, { blink, tail: tailUp ? TAIL_UP : TAIL_DOWN });
+  } else if (st === 'curl') {
+    drawSprite(CURL, catX, roof);
+  } else {
+    drawSprite(SLEEP, catX, roof);
+    if (now - lastZ > 1000) {
+      zs.push({ x: catX + 9, y: roof - SLEEP.length, age: 0, ch: Math.random() < 0.5 ? 'z' : 'Z' });
+      lastZ = now;
+    }
+  }
+
+  // floating z Z z particles
+  ctx.font = '5px monospace';
+  zs = zs.filter(z => z.age < 80);
+  zs.forEach(z => {
+    z.age++;
+    z.y -= 0.05;
+    ctx.globalAlpha = Math.max(0, 1 - z.age / 80);
+    ctx.fillStyle = '#9ba2ff';
+    ctx.fillText(z.ch, z.x + Math.sin(z.age / 6), z.y);
+  });
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(frame);
+}
+
+function resizeSky() { buildBackground(); }
+addEventListener('resize', resizeSky);
+resizeSky();
+requestAnimationFrame(frame);
+
+/* ---------- VERSION label ---------- */
+fetch("https://raw.githubusercontent.com/RenCupDotDev/NeoNano/main/VERSION", { cache: "no-store" })
+  .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+  .then(text => { document.getElementById('nn-version').textContent = text.trim() || 'unknown'; })
+  .catch(() => { document.getElementById('nn-version').textContent = 'unknown'; });
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = document.getElementById(btn.dataset.target).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const old = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = old; }, 1500);
     });
   });
+});
+
+/* ---------- F1 command palette ---------- */
+const cmd = document.getElementById('cmd');
+const cmdIn = document.getElementById('cmdIn');
+const cmdOut = document.getElementById('cmdOut');
+const HELP = 'commands: :install :keys :config :plugins :faq :github :madeby :coffee :cat :q';
+const SECTIONS = { install: 'install', keys: 'keys', config: 'config', plugins: 'plugins', faq: 'faq', madeby: 'madeby' };
+const LINKS = { github: 'https://github.com/RenCupDotDev/NeoNano' };
+
+function openCmd() {
+  cmd.style.display = 'block';
+  cmdIn.value = ':';
+  cmdOut.textContent = HELP;
+  cmdIn.focus();
+}
+function closeCmd() {
+  cmd.style.display = 'none';
+  cmdIn.blur();
+}
+
+function runCmd(raw) {
+  const k = raw.replace(/^:/, '').trim().toLowerCase();
+  if (SECTIONS[k]) {
+    document.getElementById(SECTIONS[k]).scrollIntoView();
+    cmdOut.textContent = 'jumped to ' + k;
+    return;
+  }
+  switch (k) {
+    case 'github':
+      window.open(LINKS.github, '_blank', 'noopener');
+      cmdOut.textContent = 'opening GitHub…';
+      break;
+    case 'coffee':
+      cmdOut.textContent = 'still building lightweight C tools and mobile mods.';
+      break;
+    case 'cat':
+      forcedUntil = performance.now() + 6000;
+      cmdOut.textContent = 'meow. (sleeping)';
+      break;
+    case 'q':
+      closeCmd();
+      break;
+    case '':
+      cmdOut.textContent = HELP;
+      break;
+    default:
+      cmdOut.textContent = 'unknown command: ' + raw + '   ·   ' + HELP;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'F1') {
+    e.preventDefault();
+    openCmd();
+  } else if (e.key === 'Escape' && cmd.style.display === 'block') {
+    closeCmd();
+  }
+});
+
+cmdIn.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const v = cmdIn.value;
+    cmdIn.value = ':';
+    runCmd(v);
+  }
+});
+
+document.getElementById('openCmd').addEventListener('click', openCmd);
 </script>
 </body>
 </html>
